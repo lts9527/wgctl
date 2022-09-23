@@ -57,6 +57,6 @@ func psUp(ctx context.Context, req http.Service, po *api.PsOptions) {
 	}
 	fmt.Printf("%-15s %-23s %-7s %-20s\n", ID, "STATUS", "PORTS", "NAMES")
 	for _, v := range ss["ps"] {
-		fmt.Printf("%s\t%s\t%s\t%s\n", v.WgConfigId[:9], v.Status, v.Ports, v.Names)
+		fmt.Printf("%-15s %-23s %-7s %-20s\n", v.WgConfigId[:9], v.Status, v.Ports, v.Names)
 	}
 }
