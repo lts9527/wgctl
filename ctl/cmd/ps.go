@@ -37,18 +37,18 @@ func psUp(ctx context.Context, req http.Service, po *api.PsOptions) {
 		return
 	}
 	if response.Ret != 1 {
-		fmt.Println(response.Error)
+		fmt.Println(response.Msg)
 		return
 	}
 	marshal, err := json.Marshal(response.Data)
 	if err != nil {
-		fmt.Println(response.Error)
+		fmt.Println(err.Error())
 		return
 	}
 	ss := make(map[string][]api.PsOptions)
 	err = json.Unmarshal(marshal, &ss)
 	if err != nil {
-		fmt.Println(response.Error)
+		fmt.Println(err.Error())
 		return
 	}
 	var ID = "CLIENT ID"
