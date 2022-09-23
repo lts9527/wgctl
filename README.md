@@ -37,4 +37,11 @@ wgctl create --name test -j 9527
 wgctl delete xxx
 ```
 
+4.创建服务端配置 
+
+三个字段都不能为空
+```
+wgctl create --new --name test -s 172.26.0.0/24
+```
+
 备注: 可以把wgctl文件放到/usr/local/bin/目录下 就不用每次在项目目录以脚本执行了
