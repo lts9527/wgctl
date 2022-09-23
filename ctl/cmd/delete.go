@@ -4,6 +4,7 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
+	"ctl/config"
 	"ctl/log"
 	req "ctl/service/http"
 	"encoding/json"
@@ -40,7 +41,7 @@ func runDelete(ctx context.Context, req http.Service, args []string, do *api.Del
 	for _, v := range args {
 		do.Id = append(do.Id, v)
 	}
-	response, err := req.Delete(do, "http://127.0.0.1:4000/api/v1/task/delete")
+	response, err := req.Delete(do, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/delete", config.CtlConf.GetString("server.apiGateway.port")))
 	if err != nil {
 		log.Error(err.Error())
 		return

@@ -4,6 +4,7 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
+	"ctl/config"
 	req "ctl/service/http"
 	"encoding/json"
 	"fmt"
@@ -31,7 +32,7 @@ func init() {
 func psUp(ctx context.Context, req http.Service, po *api.PsOptions) {
 	response, err := req.Ps(&api.PsOptions{
 		Server: po.Server,
-	}, "http://127.0.0.1:4000/api/v1/task/ps")
+	}, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/ps", config.CtlConf.GetString("server.apiGateway.port")))
 	if err != nil {
 		fmt.Println(err.Error())
 		return

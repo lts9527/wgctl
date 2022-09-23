@@ -9,7 +9,7 @@ import (
 func NewRouter(service ...interface{}) *gin.Engine {
 	r := gin.Default()
 	r.Use(middleware.Cors(), middleware.InitMiddleware(service))
-	work := r.Group("/api/v1/task/")
+	work := r.Group("/api/v1/work/")
 	{
 		work.GET("ping", func(c *gin.Context) {
 			c.JSON(200, "success")

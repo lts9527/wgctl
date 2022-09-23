@@ -4,6 +4,7 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
+	"ctl/config"
 	req "ctl/service/http"
 	"fmt"
 	"github.com/skip2/go-qrcode"
@@ -35,7 +36,7 @@ func init() {
 }
 
 func showUp(ctx context.Context, req http.Service, so *api.ShowOptions) {
-	response, err := req.Show(so, "http://127.0.0.1:4000/api/v1/task/show")
+	response, err := req.Show(so, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/show", config.CtlConf.GetString("server.apiGateway.port")))
 	if err != nil {
 		fmt.Println(err.Error())
 		return
