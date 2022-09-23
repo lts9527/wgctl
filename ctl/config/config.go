@@ -6,11 +6,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var (
-	CtlConf *config
-)
+//var (
+//	CtlConf *config
+//)
 
-type config struct {
+type Config struct {
 	viper           *viper.Viper
 	ContainerConfig *api.Container
 }
@@ -21,13 +21,13 @@ type configInfo struct {
 	ConfPath string
 }
 
-func init() {
+func NewConfig() *Config {
 	c1 := &configInfo{
 		ConfName: "config",
 		ConfType: "yaml",
 		ConfPath: "config/",
 	}
-	CtlConf = &config{
+	return &Config{
 		viper: getConf(c1),
 	}
 }
@@ -44,15 +44,15 @@ func getConf(c1 *configInfo) *viper.Viper {
 	return v
 }
 
-func (c *config) GetString(key string) string {
+func (c *Config) GetString(key string) string {
 	return c.viper.GetString(key)
 }
 
-func (c *config) GetStringSlice(key string) []string {
+func (c *Config) GetStringSlice(key string) []string {
 	return c.viper.GetStringSlice(key)
 }
 
-func (c *config) UnmarshalKeySliceContainer(key string) (*api.Container, error) {
+func (c *Config) UnmarshalKeySliceContainer(key string) (*api.Container, error) {
 	err := c.viper.UnmarshalKey(key, &c.ContainerConfig)
 	if err != nil {
 		return nil, err
@@ -60,6 +60,6 @@ func (c *config) UnmarshalKeySliceContainer(key string) (*api.Container, error) 
 	return c.ContainerConfig, nil
 }
 
-func (c *config) GetInt(key string) int {
+func (c *Config) GetInt(key string) int {
 	return c.viper.GetInt(key)
 }

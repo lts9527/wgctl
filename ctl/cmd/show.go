@@ -4,11 +4,11 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
-	"ctl/config"
 	req "ctl/service/http"
 	"fmt"
 	"github.com/skip2/go-qrcode"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // execCmd represents the exec command
@@ -16,7 +16,10 @@ var showCmd = &cobra.Command{
 	Use:   "show",
 	Short: "Show 查看指定名称的wireguard配置",
 	PreRun: func(cmd *cobra.Command, args []string) {
-
+		if len(args) == 0 {
+			fmt.Println("查询名称不能为空")
+			os.Exit(1)
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -36,7 +39,7 @@ func init() {
 }
 
 func showUp(ctx context.Context, req http.Service, so *api.ShowOptions) {
-	response, err := req.Show(so, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/show", config.CtlConf.GetString("server.apiGateway.port")))
+	response, err := req.Show(so, "http://127.0.0.1:4000/api/v1/work/show")
 	if err != nil {
 		fmt.Println(err.Error())
 		return

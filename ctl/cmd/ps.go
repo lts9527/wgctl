@@ -4,14 +4,12 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
-	"ctl/config"
 	req "ctl/service/http"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
 )
 
-// execCmd represents the exec command
 var psCmd = &cobra.Command{
 	Use:   "ps",
 	Short: "Ps 查看wireguard配置",
@@ -32,7 +30,7 @@ func init() {
 func psUp(ctx context.Context, req http.Service, po *api.PsOptions) {
 	response, err := req.Ps(&api.PsOptions{
 		Server: po.Server,
-	}, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/ps", config.CtlConf.GetString("server.apiGateway.port")))
+	}, "http://127.0.0.1:4000/api/v1/work/ps")
 	if err != nil {
 		fmt.Println(err.Error())
 		return

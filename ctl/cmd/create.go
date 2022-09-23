@@ -4,7 +4,6 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
-	"ctl/config"
 	"ctl/log"
 	"ctl/pkg/util"
 	req "ctl/service/http"
@@ -65,7 +64,7 @@ func runUp(ctx context.Context, req http.Service, co *api.CreateOptions) {
 	if create.PublicIp == "" {
 		create.PublicIp, _ = util.GetPublicIp()
 	}
-	response, err := req.Create(create, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/create", config.CtlConf.GetString("server.apiGateway.port")))
+	response, err := req.Create(create, "http://127.0.0.1:4000/api/v1/work/create")
 	if err != nil {
 		log.Error(err.Error())
 		return

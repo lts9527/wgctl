@@ -14,7 +14,6 @@ import (
 	"strings"
 )
 
-// execCmd represents the exec command
 var initCmd = &cobra.Command{
 	Use:   "init",
 	Short: "Init 容器初始化",
@@ -33,7 +32,7 @@ func init() {
 }
 
 func runInit(ctx context.Context, req http.Service) {
-	configSlice, err := config.CtlConf.UnmarshalKeySliceContainer("wireguard.container")
+	configSlice, err := ctlConf().UnmarshalKeySliceContainer("wireguard.container")
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -69,12 +68,13 @@ func Run(io *api.InitOptions) {
 }
 
 func BuildDockerRunWorkCmd(co *api.Container) string {
+	//ctlConf := config.NewConfig()
 	var sb strings.Builder
 	sb.Write([]byte(RunDockerfile))
 	var envMap = make(map[string]interface{})
-	envMap["WorkAddress"] = config.CtlConf.GetString("server.work.address")
-	envMap["ApiGatewayAddress"] = config.CtlConf.GetString("server.apiGateway.address")
-	envMap["ApiGatewayMappingPort"] = config.CtlConf.GetString("server.apiGateway.port")
+	envMap["WorkAddress"] = ctlConf().GetString("server.work.address")
+	envMap["ApiGatewayAddress"] = ctlConf().GetString("server.apiGateway.address")
+	envMap["ApiGatewayMappingPort"] = ctlConf().GetString("server.apiGateway.port")
 	envMap["WorkMappingPort"] = co.Port
 	envMap["subnet"] = co.Subnet
 	envMap["gateway"] = getGatewayIp(co.Subnet)
@@ -86,6 +86,13 @@ func getGatewayIp(subnet string) string {
 	r[len(subnet)-4] = '1'
 	str := strings.Split(string(r), "/")
 	return str[0]
+}
+
+func getConfig() func() *config.Config {
+	f := func() *config.Config {
+		return config.NewConfig()
+	}
+	return f
 }
 
 const RunDockerfile = string(`version: '3'

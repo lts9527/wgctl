@@ -4,7 +4,6 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
-	"ctl/config"
 	"ctl/log"
 	req "ctl/service/http"
 	"encoding/json"
@@ -17,9 +16,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete 删除指定的wireguard客户端配置 删除多个id或名称使用空格隔开",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		//for _, v := range args {
-		//	fmt.Println(v)
-		//}
+
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -41,7 +38,7 @@ func runDelete(ctx context.Context, req http.Service, args []string, do *api.Del
 	for _, v := range args {
 		do.Id = append(do.Id, v)
 	}
-	response, err := req.Delete(do, fmt.Sprintf("http://127.0.0.1:%s/api/v1/work/delete", config.CtlConf.GetString("server.apiGateway.port")))
+	response, err := req.Delete(do, "http://127.0.0.1:4000/api/v1/work/delete")
 	if err != nil {
 		log.Error(err.Error())
 		return

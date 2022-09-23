@@ -1,6 +1,8 @@
 package cmd
 
-import api "ctl/api/grpc/v1"
+import (
+	api "ctl/api/grpc/v1"
+)
 
 var (
 	Init   = &api.InitOptions{}
@@ -9,4 +11,5 @@ var (
 	show    = &api.ShowOptions{}
 	ps      = &api.PsOptions{}
 	deletes = &api.DeleteOptions{}
+	ctlConf = getConfig()
 )
