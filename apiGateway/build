@@ -1,0 +1,4 @@
+#!/bin/bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o apiGateway cmd/main.go
+docker build -t api-gateway:test .
+rm -rf apiGateway

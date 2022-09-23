@@ -1,0 +1,9 @@
+FROM alpine:latest
+
+WORKDIR /opt/apiGateway/
+
+COPY apiGateway /opt/apiGateway/apiGateway
+
+EXPOSE 4000
+
+ENTRYPOINT ["/opt/apiGateway/apiGateway"]

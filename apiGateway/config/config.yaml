@@ -1,0 +1,11 @@
+server:
+  port: :4000
+  version: 1.0
+  jwtSecret: 38324
+
+domain:
+  user: "127.0.0.1:10001"
+  task: "wgctl-work:10002"
+
+etcd:
+  address: 192.168.100.236:12379

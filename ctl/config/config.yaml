@@ -1,0 +1,33 @@
+server:
+  version: 1.0
+  grpc: true
+  work:
+    address: 172.23.0.2
+    port: 10002
+  apiGateway:
+    address: 172.23.0.3
+    port: 4000
+
+domain:
+  work: "wgctl-work:10002"
+
+wireguard:
+  wgConfigDir: /etc/wireguard/
+  wgctlServerDir: /etc/wgctl/server/
+  wgctlClientDir: /etc/wgctl/client/
+  initdir: /config/config.yaml
+  publicip: 127.0.0.1
+  container:
+    name: test
+    port: 50000-50050
+    subnet: 172.23.0.0/24
+    configs:
+      - user: root
+        subnet: 10.10.10.0/24
+        address: 10.10.10.1
+      - user: 9527
+        subnet: 192.168.100.0/24
+        address: 192.168.100.1
+      - user: test
+        subnet: 172.16.0.0/24
+        address: 172.16.0.1

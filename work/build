@@ -1,0 +1,4 @@
+#!/bin/bash
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o work cmd/main.go
+docker build -t work:test .
+rm -rf work

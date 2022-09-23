@@ -1,0 +1,9 @@
+FROM wrq1/wgc:latest
+
+WORKDIR /opt/work/
+
+RUN mkdir -p /etc/wgctl/server /etc/wgctl/client /etc/wgctl/wireguard
+
+COPY work /opt/work/work
+
+ENTRYPOINT ["/opt/work/work"]

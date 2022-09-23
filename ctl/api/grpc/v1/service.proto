@@ -1,0 +1,152 @@
+syntax = "proto3";
+package pb;
+option go_package = "/service;service";
+
+message RequestResult {
+  string send = 1;
+  string msg = 2;
+}
+
+message MessageResponse {
+  string msg = 2;
+  string user_id = 3;
+  string wireguard_config = 4;
+  string name = 5;
+  repeated PsOptions ps = 6;
+  DeleteOptions delete = 7;
+}
+
+message InitOptions {
+  Wireguard Wireguard = 1;
+}
+
+message Wireguard {
+  string wg_config_dir = 1;
+  string public_ip = 2;
+  string init_dir = 3;
+  Container container = 4;
+}
+
+message Container {
+  string name = 1;
+  string port = 2;
+  string subnet = 4;
+  repeated Configs configs = 5;
+}
+
+message Configs {
+  string user = 1;
+  string subnet = 2;
+  string address = 3;
+}
+
+message ConfigObjConfig {
+  string user_id = 1;
+  string join_server_id = 2;
+  string wireguard_config = 3;
+  string subnet = 4;
+  string port = 5;
+  string private_key = 6;
+  string public_key = 7;
+  string address = 8;
+  string dns = 9;
+  string MTU = 10;
+  string allowedIPs = 11;
+  string endpoint = 12;
+  string persistent_keepalive = 13;
+}
+
+message CreateOptions {
+  bool NewServer =1;
+  int32 time = 2;
+  string name = 3;
+  string join_server_id =4;
+  string subnet = 5;
+  string listen_port =6;
+  string dns = 7;
+  string mtu = 8;
+  string public_ip =9;
+}
+
+message StartOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+message RestartOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+message StopOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+message UpOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+message LogOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+message PsOptions {
+  bool server = 1;
+  int32 create_time = 2;
+  string wg_config_id = 3;
+  string created = 4;
+  string status = 5;
+  string ports = 6;
+  string names = 7;
+}
+
+message RemoveOptions {
+  int32 time = 1;
+  repeated string id = 2;
+}
+
+message DeleteOptions {
+  bool server = 1;
+  bool all = 2;
+  int32 time = 3;
+  string msg = 4;
+  repeated string id = 5;
+  repeated string Existence = 6;
+  repeated string DoesNotExist = 7;
+}
+
+message RunOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+message ShowOptions {
+  bool picture = 1;
+  bool server = 2;
+  int32 time = 3;
+  string user_id = 4;
+  string config = 5;
+}
+
+message EditOptions {
+  int32 time = 1;
+  string user_id = 2;
+}
+
+service Service {
+  rpc Create(CreateOptions) returns (MessageResponse) {}
+  rpc Start(StartOptions) returns (MessageResponse) {}
+  rpc Restart(RestartOptions) returns (MessageResponse);
+  rpc Stop(StopOptions) returns (MessageResponse);
+  rpc Up(UpOptions) returns (MessageResponse);
+  rpc Logs(LogOptions) returns (MessageResponse);
+  rpc Ps(PsOptions) returns (MessageResponse);
+  rpc Remove(RemoveOptions) returns (MessageResponse);
+  rpc Delete(DeleteOptions) returns (MessageResponse);
+  rpc Exec(RunOptions) returns (MessageResponse);
+  rpc Show(ShowOptions) returns (MessageResponse);
+  rpc Edit(EditOptions) returns (MessageResponse);
+}
