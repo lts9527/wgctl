@@ -13,15 +13,20 @@ import (
 
 func (s *Service) CreateServer(ctx context.Context, co *model.CreateOptions) (reply *pb.MessageResponse, err error) {
 	reply = new(pb.MessageResponse)
+	var ListenPort int
 	if _, ok := s.getServerNameMapping(co.Name); ok {
 		return reply, errors.New("name already exists")
+	}
+	if ListenPort, err = s.getListenPort(); err != nil {
+		log.Error(err.Error())
+		return reply, err
 	}
 	Address := s.setIpPool(co.Name, co.Subnet)
 	PrivateKey, PublicKey := util.GenerateKeyPair()
 	UserConfig := &model.ConfigObjConfig{
 		Time:                int32(time.Now().Unix()),
 		Name:                co.Name,
-		ListenPort:          strconv.Itoa(s.getListenPort()),
+		ListenPort:          strconv.Itoa(ListenPort),
 		PrivateKey:          PrivateKey,
 		PublicKey:           PublicKey,
 		Address:             Address,

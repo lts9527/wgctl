@@ -16,11 +16,12 @@ import (
 )
 
 type Service struct {
+	PortPool              map[int]bool
 	ActiveInterface       map[string]string
 	NotActivatedInterface map[string]string
 	ClientNameMapping     map[string]*model.ConfigObjConfig
 	ServerNameMapping     map[string]*model.ConfigObjConfig
-	AddressPool           map[string]map[string]interface{}
+	AddressPool           map[string]map[string]bool
 }
 
 func NewService() *Service {
@@ -30,6 +31,7 @@ func NewService() *Service {
 		ClientNameMapping:     InspectionClientNameMapping(),
 		ServerNameMapping:     InspectionServerNameMapping(),
 		AddressPool:           InitializeIpAddressPool(),
+		PortPool:              InitializePortPool(),
 	}
 }
 
@@ -67,8 +69,8 @@ func InspectionServerNameMapping() map[string]*model.ConfigObjConfig {
 	return ServerNameMapping
 }
 
-func InitializeIpAddressPool() map[string]map[string]interface{} {
-	Address := make(map[string]map[string]interface{})
+func InitializeIpAddressPool() map[string]map[string]bool {
+	Address := make(map[string]map[string]bool)
 	configSlice, err := config.WorkConf.UnmarshalKeySliceContainer("wireguard.container")
 	if err != nil {
 		log.Error(err.Error())
@@ -77,13 +79,26 @@ func InitializeIpAddressPool() map[string]map[string]interface{} {
 	for _, v := range configSlice.Configs {
 		ss := strings.FieldsFunc(v.Subnet, util.SplitFunc)
 		address := ss[0] + "." + ss[1] + "." + ss[2] + "."
-		Address[v.User] = make(map[string]interface{})
+		Address[v.User] = make(map[string]bool)
 		for i := 1; i <= 254; i++ {
-			Address[v.User][address+strconv.Itoa(i)] = nil
+			Address[v.User][address+strconv.Itoa(i)] = true
 		}
 		delete(Address[v.User], address+strconv.Itoa(1))
 	}
 	return Address
+}
+
+func InitializePortPool() map[int]bool {
+	var min, max int
+	portPool := make(map[int]bool)
+	rule := strings.Split(config.WorkConf.GetString("wireguard.container.port"), "-")
+	min, _ = strconv.Atoi(rule[0])
+	max, _ = strconv.Atoi(rule[1])
+	for min <= max {
+		portPool[min] = true
+		min++
+	}
+	return portPool
 }
 
 func (s *Service) InitializeServerConfiguration() {
@@ -156,11 +171,16 @@ func (s *Service) readCreateServerTemplateConfig(name string) {
 
 func (s *Service) buildServerConfig(configs *model.ConfigObjConfig) {
 	var err error
+	var ListenPort int
+	if ListenPort, err = s.getListenPort(); err != nil {
+		log.Error(err.Error())
+		return
+	}
 	PrivateKey, PublicKey := util.GenerateKeyPair()
 	create := &model.ConfigObjConfig{
 		Time:                int32(time.Now().Unix()),
 		Name:                configs.Name,
-		ListenPort:          strconv.Itoa(s.getListenPort()),
+		ListenPort:          strconv.Itoa(ListenPort),
 		PrivateKey:          PrivateKey,
 		PublicKey:           PublicKey,
 		Address:             configs.Address,
@@ -194,9 +214,9 @@ func (s *Service) stopWG(name string) {
 }
 
 func (s *Service) iptablesCamouflage() {
-	output, err := exec.Command("/bin/sh", "-c", `iptables-save | grep "POSTROUTING -o eth0 -j MASQUERADE"`).Output()
+	output, err := exec.Command("/bin/sh", "-c", `iptables-save | grep "POSTROUTING -o eth0 -j MASQUERADE"`).CombinedOutput()
 	if err != nil {
-		log.Error(err.Error())
+		log.Error(fmt.Sprintf("iptablesCamouflage: %s", err.Error()))
 	}
 	if len(output) == 0 {
 		exec.Command("/bin/sh", "-c", "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE").Run()
@@ -221,12 +241,12 @@ func (s *Service) getActiveInterface() {
 	//return strings.Replace(string(output), "\n", "", -1)
 }
 
-func (s *Service) getListenPort() int {
-	var min, max int
-	rule := strings.Split(config.WorkConf.GetString("wireguard.container.port"), "-")
-	min, _ = strconv.Atoi(rule[0])
-	max, _ = strconv.Atoi(rule[1])
-	return util.GenerateRandInt(min, max)
+func (s *Service) getListenPort() (int, error) {
+	for k, _ := range s.PortPool {
+		delete(s.PortPool, k)
+		return k, nil
+	}
+	return -1, errors.New("no ports available")
 }
 
 func (s *Service) getServerNameMapping(name string) (*model.ConfigObjConfig, bool) {
@@ -291,11 +311,11 @@ func (s *Service) getCreateTime(createTime int64) int {
 }
 
 func (s *Service) setIpPool(name, subnet string) string {
-	s.AddressPool[name] = make(map[string]interface{})
+	s.AddressPool[name] = make(map[string]bool)
 	ss := strings.FieldsFunc(subnet, util.SplitFunc)
 	address := ss[0] + "." + ss[1] + "." + ss[2] + "."
 	for i := 1; i <= 255; i++ {
-		s.AddressPool[name][address+strconv.Itoa(i)] = nil
+		s.AddressPool[name][address+strconv.Itoa(i)] = true
 	}
 	delete(s.AddressPool[name], address+strconv.Itoa(1))
 	return address + strconv.Itoa(1)
