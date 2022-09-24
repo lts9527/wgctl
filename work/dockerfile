@@ -1,8 +1,9 @@
-FROM wrq1/wgc:latest
+FROM alpine:latest
 
 WORKDIR /opt/work/
 
 RUN mkdir -p /etc/wgctl/server /etc/wgctl/client /etc/wgctl/wireguard
+RUN apk update && apk upgrade && apk add --no-cache -u wireguard-tools curl
 
 COPY work /opt/work/work
 
