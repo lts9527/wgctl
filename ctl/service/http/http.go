@@ -108,6 +108,9 @@ func (r *Request) Up(req *api.UpOptions, url string) (reply *http.Response, err 
 
 func (r *Request) Delete(req *api.DeleteOptions, url string) (reply *http.Response, err error) {
 	marshal, err := json.Marshal(req)
+	if err != nil {
+		return nil, nil
+	}
 	resp, err := gohttp.NewRequest().Body(marshal).Post(url)
 	if err != nil || resp == nil {
 		return nil, err

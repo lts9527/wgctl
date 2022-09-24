@@ -11,8 +11,7 @@ import (
 
 func (s *Service) PsClient(ctx context.Context, po *model.PsOptions) (reply *pb.MessageResponse, err error) {
 	reply = new(pb.MessageResponse)
-	path := "/etc/wgctl/wireguard/"
-	sl, err := util.FileForEach(path)
+	sl, err := util.FileForEach("/etc/wgctl/wireguard/")
 	if err != nil {
 		log.Error(err.Error())
 		return reply, err

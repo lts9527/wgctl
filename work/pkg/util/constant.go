@@ -20,5 +20,3 @@ AllowedIPs = {{.AllowedIPs}}`
 const APPENDSERVERCONFIGS string = `[Interface]
 PrivateKey = {{.PrivateKey}}
 ListenPort = {{.ListenPort}}`
-
-const SERVERCONFIGTEMPLATE = string(`{"time":1663248935,"name":"{{.Name}}","port":"{{.Port}}","private_key":"{{.PrivateKey}}","public_key":"{{.PublicKey}}","address":"{{.Address}}","dns":"{{.DNS}}","MTU":"{{.MTU}}","allowedIPs":"{{.AllowedIPs}}","persistent_keepalive":"{{.PersistentKeepalive}}"}`)

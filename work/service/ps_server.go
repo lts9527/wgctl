@@ -11,13 +11,12 @@ import (
 
 func (s *Service) PsServer(ctx context.Context, po *model.PsOptions) (reply *pb.MessageResponse, err error) {
 	reply = new(pb.MessageResponse)
-	path := config.WorkConf.GetString("wireguard.wgConfigDir")
-	sl, err := util.FileForEach(path)
+	sl, err := util.FileForEach(config.WorkConf.GetString("wireguard.wgConfigDir"))
 	if err != nil {
 		log.Error(err.Error())
 		return reply, err
 	}
-	// 遍历当前的wireguard接口
+	// 遍历当前服务端的wireguard接口
 	for _, v := range sl {
 		name := s.formatFileName(v.Name(), ".conf")
 		reply.Ps = append(reply.Ps, &pb.PsOptions{

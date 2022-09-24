@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
-	"strings"
 	pb "work/api/grpc/v1"
 	"work/log"
 	"work/model"
@@ -20,21 +18,17 @@ type deleteEnvMap struct {
 func (s *Service) DeleteClient(ctx context.Context, do *model.DeleteOptions) (reply *pb.MessageResponse, err error) {
 	reply = new(pb.MessageResponse)
 	var resp = &pb.DeleteOptions{}
-	idList := make(map[string]*deleteEnvMap)
 	if do.All {
 		for _, v := range s.ClientNameMapping {
-			err = os.Remove("/etc/wgctl/wireguard/" + v.Name)
-			if err != nil {
+			if err = os.Remove("/etc/wgctl/wireguard/" + v.Name); err != nil {
 				log.Error(err.Error())
 				continue
 			}
-			err = os.Remove("/etc/wgctl/client/" + v.Name)
-			if err != nil {
+			if err = os.Remove("/etc/wgctl/client/" + v.Name); err != nil {
 				log.Error(err.Error())
 				continue
 			}
-			err := DeleteClientConfig(fmt.Sprintf("/etc/wireguard/%s", v.JoinServerId+".conf"), v.Address)
-			if err != nil {
+			if err = s.deleteClientConfig(fmt.Sprintf("/etc/wireguard/%s", v.JoinServerId+".conf"), v.Address); err != nil {
 				log.Error(err.Error())
 				continue
 			}
@@ -45,6 +39,7 @@ func (s *Service) DeleteClient(ctx context.Context, do *model.DeleteOptions) (re
 		reply.Delete = resp
 		return
 	}
+	idList := make(map[string]*deleteEnvMap)
 	for _, v := range do.Id {
 		idList[v] = &deleteEnvMap{}
 	}
@@ -75,18 +70,15 @@ func (s *Service) DeleteClient(ctx context.Context, do *model.DeleteOptions) (re
 	}
 	for k, _ := range idList {
 		if idList[k].Name != "" {
-			err = os.Remove("/etc/wgctl/wireguard/" + idList[k].Name)
-			if err != nil {
+			if err = os.Remove("/etc/wgctl/wireguard/" + idList[k].Name); err != nil {
 				log.Error(err.Error())
 				continue
 			}
-			err = os.Remove("/etc/wgctl/client/" + idList[k].Name)
-			if err != nil {
+			if err = os.Remove("/etc/wgctl/client/" + idList[k].Name); err != nil {
 				log.Error(err.Error())
 				continue
 			}
-			err := DeleteClientConfig(fmt.Sprintf("/etc/wireguard/%s", idList[k].Join+".conf"), idList[k].Address)
-			if err != nil {
+			if err = s.deleteClientConfig(fmt.Sprintf("/etc/wireguard/%s", idList[k].Join+".conf"), idList[k].Address); err != nil {
 				log.Error(err.Error())
 				continue
 			}
@@ -97,24 +89,6 @@ func (s *Service) DeleteClient(ctx context.Context, do *model.DeleteOptions) (re
 		}
 		resp.DoesNotExist = append(resp.DoesNotExist, k)
 	}
-	s.getClientNameMappingAll()
 	reply.Delete = resp
 	return
-}
-
-// DeleteClientConfig 将服务端配置中的客户端配置删除
-func DeleteClientConfig(path, address string) error {
-	Output, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("grep -n -B 2 %s %s | awk '{print $1}' | grep -o -E '\\<[0-9]\\>|\\<[0-9][0-9]\\>|\\<[0-9][0-9][0-9]\\>'", address, path)).Output()
-	if err != nil {
-		return err
-	}
-	nums := strings.Split(string(Output), "\n")
-	for i := 0; i < len(nums)-1; i++ {
-		err = exec.Command("/bin/sh", "-c", fmt.Sprintf("sed -i \"%sd\" %s", nums[0], path)).Run()
-		if err != nil {
-			log.Error(err.Error())
-			continue
-		}
-	}
-	return nil
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
-	"ctl/log"
 	"ctl/pkg/util"
 	req "ctl/service/http"
 	"encoding/json"
@@ -25,7 +24,7 @@ var createCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		runUp(ctx, req.NewRequest(), create)
+		runCreate(ctx, req.NewRequest(), create)
 	},
 }
 
@@ -42,57 +41,30 @@ func init() {
 	createCmd.MarkFlagsRequiredTogether("new", "subnet")
 }
 
-func runUp(ctx context.Context, req http.Service, co *api.CreateOptions) {
-	//createOptions.Apply(project)
-
-	//err := upOptions.apply(project, services)
-	//if err != nil {
-	//	return err
-	//}
-
-	create := &api.CreateOptions{
-		NewServer:    co.NewServer,
-		Time:         int32(time.Now().Unix()),
-		Name:         co.Name,
-		JoinServerId: co.JoinServerId,
-		Subnet:       co.Subnet,
-		ListenPort:   co.ListenPort,
-		Dns:          co.Dns,
-		Mtu:          co.Mtu,
-		PublicIp:     co.PublicIp,
+func runCreate(ctx context.Context, req http.Service, co *api.CreateOptions) {
+	co.Time = int32(time.Now().Unix())
+	if co.PublicIp == "" {
+		co.PublicIp, _ = util.GetPublicIp()
 	}
-	if create.PublicIp == "" {
-		create.PublicIp, _ = util.GetPublicIp()
-	}
-	response, err := req.Create(create, "http://127.0.0.1:4000/api/v1/work/create")
+	response, err := req.Create(co, "http://127.0.0.1:4000/api/v1/work/create")
 	if err != nil {
-		log.Error(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
-	//fmt.Println("response", response)
 	if response.Ret != 1 {
-		log.Error(response.Msg)
+		fmt.Println(response.Msg)
 		return
 	}
 	marshal, err := json.Marshal(response.Data)
 	if err != nil {
-		log.Error(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
 	ss := make(map[string]string)
 	err = json.Unmarshal(marshal, &ss)
 	if err != nil {
-		log.Error(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
 	fmt.Println(ss["user_id"])
-
-	//response, err := req.Up(&api.UpOptions{
-	//	Time:   0,
-	//	UserId: "",
-	//}, "")
-	//if err != nil {
-	//	log.Error(err.Error())
-	//}
-	//fmt.Println("response", response)
 }

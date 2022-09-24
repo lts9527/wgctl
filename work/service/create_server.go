@@ -35,7 +35,9 @@ func (s *Service) CreateServer(ctx context.Context, co *model.CreateOptions) (re
 		log.Error(err.Error())
 		return nil, err
 	}
+	// 写入服务端缓存
 	s.ServerNameMapping[UserConfig.Name] = ServerConfig
+	s.startWG(UserConfig.Name)
 	reply.UserId = ServerConfig.UserId
 	reply.Name = UserConfig.Name
 	return

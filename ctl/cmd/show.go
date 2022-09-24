@@ -54,5 +54,4 @@ func showUp(ctx context.Context, req http.Service, so *api.ShowOptions) {
 		return
 	}
 	fmt.Println(response.Data)
-	return
 }

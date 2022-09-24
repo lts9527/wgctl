@@ -12,13 +12,13 @@ import (
 
 var psCmd = &cobra.Command{
 	Use:   "ps",
-	Short: "Ps 查看wireguard配置",
+	Short: "Ps 查看配置列表",
 	PreRun: func(cmd *cobra.Command, args []string) {
 
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
-		psUp(ctx, req.NewRequest(), ps)
+		psUp(ctx, req.NewRequest(), &api.PsOptions{Server: ps.Server})
 	},
 }
 
@@ -28,9 +28,7 @@ func init() {
 }
 
 func psUp(ctx context.Context, req http.Service, po *api.PsOptions) {
-	response, err := req.Ps(&api.PsOptions{
-		Server: po.Server,
-	}, "http://127.0.0.1:4000/api/v1/work/ps")
+	response, err := req.Ps(po, "http://127.0.0.1:4000/api/v1/work/ps")
 	if err != nil {
 		fmt.Println(err.Error())
 		return

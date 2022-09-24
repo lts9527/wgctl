@@ -12,16 +12,13 @@ import (
 func (s *Service) DeleteServer(ctx context.Context, do *model.DeleteOptions) (reply *pb.MessageResponse, err error) {
 	reply = new(pb.MessageResponse)
 	var resp = &pb.DeleteOptions{}
-	idList := make(map[string]*deleteEnvMap)
 	if do.All {
 		for _, v := range s.ServerNameMapping {
-			err = os.Remove("/etc/wireguard/" + v.Name + ".conf")
-			if err != nil {
+			if err = os.Remove("/etc/wireguard/" + v.Name + ".conf"); err != nil {
 				log.Error(err.Error())
 				continue
 			}
-			err = os.Remove("/etc/wgctl/server/" + v.Name)
-			if err != nil {
+			if err = os.Remove("/etc/wgctl/server/" + v.Name); err != nil {
 				log.Error(err.Error())
 				continue
 			}
@@ -32,6 +29,7 @@ func (s *Service) DeleteServer(ctx context.Context, do *model.DeleteOptions) (re
 		reply.Delete = resp
 		return
 	}
+	idList := make(map[string]*deleteEnvMap)
 	for _, v := range do.Id {
 		idList[v] = &deleteEnvMap{}
 	}
@@ -60,13 +58,11 @@ func (s *Service) DeleteServer(ctx context.Context, do *model.DeleteOptions) (re
 	for k, _ := range idList {
 		if idList[k].Name != "" {
 			s.stopWG(idList[k].Name)
-			err = os.Remove(config.WorkConf.GetString("wireguard.wgConfigDir") + idList[k].Name + ".conf")
-			if err != nil {
+			if err = os.Remove(config.WorkConf.GetString("wireguard.wgConfigDir") + idList[k].Name + ".conf"); err != nil {
 				log.Error(err.Error())
 				continue
 			}
-			err = os.Remove(config.WorkConf.GetString("wireguard.wgctlServerDir") + idList[k].Name)
-			if err != nil {
+			if err = os.Remove(config.WorkConf.GetString("wireguard.wgctlServerDir") + idList[k].Name); err != nil {
 				log.Error(err.Error())
 				continue
 			}

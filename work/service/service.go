@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/allegro/bigcache/v3"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
-	api "work/api/grpc/v1"
 	"work/config"
 	"work/log"
 	"work/model"
@@ -18,7 +16,6 @@ import (
 )
 
 type Service struct {
-	cache                 *bigcache.BigCache
 	ActiveInterface       map[string]string
 	NotActivatedInterface map[string]string
 	ClientNameMapping     map[string]*model.ConfigObjConfig
@@ -27,9 +24,7 @@ type Service struct {
 }
 
 func NewService() *Service {
-	cache, _ := bigcache.NewBigCache(bigcache.DefaultConfig(1 * time.Minute))
 	return &Service{
-		cache:                 cache,
 		ActiveInterface:       make(map[string]string),
 		NotActivatedInterface: make(map[string]string),
 		ClientNameMapping:     InspectionClientNameMapping(),
@@ -38,22 +33,57 @@ func NewService() *Service {
 	}
 }
 
-func (s *Service) getActiveInterface() {
-	sl, err := util.FileForEach("/etc/wgctl/wireguard/")
+func InspectionClientNameMapping() map[string]*model.ConfigObjConfig {
+	ServerNameMapping := make(map[string]*model.ConfigObjConfig)
+	sl, err := util.FileForEach("/etc/wgctl/client/")
 	if err != nil {
 		log.Error(err.Error())
 	}
 	for _, v := range sl {
-		configs, err := util.ReadConfigs("/etc/wgctl/wireguard/" + v.Name())
+		configs, err := util.ReadConfigs("/etc/wgctl/client/" + v.Name())
 		if err != nil {
 			log.Error(err.Error())
 			continue
 		}
-		s.ActiveInterface[v.Name()] = configs.WireguardConfig
+		ServerNameMapping[configs.Name] = configs
 	}
-	//output, _ := exec.Command("/bin/sh", "-c", "wg | grep \"interface:\" |awk '{print $2}'").Output()
-	//s.ActiveInterface
-	//return strings.Replace(string(output), "\n", "", -1)
+	return ServerNameMapping
+}
+
+func InspectionServerNameMapping() map[string]*model.ConfigObjConfig {
+	ServerNameMapping := make(map[string]*model.ConfigObjConfig)
+	sl, err := util.FileForEach("/etc/wgctl/server/")
+	if err != nil {
+		log.Error(err.Error())
+	}
+	for _, v := range sl {
+		configs, err := util.ReadConfigs("/etc/wgctl/server/" + v.Name())
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		ServerNameMapping[v.Name()] = configs
+	}
+	return ServerNameMapping
+}
+
+func InitializeIpAddressPool() map[string]map[string]interface{} {
+	Address := make(map[string]map[string]interface{})
+	configSlice, err := config.WorkConf.UnmarshalKeySliceContainer("wireguard.container")
+	if err != nil {
+		log.Error(err.Error())
+		return nil
+	}
+	for _, v := range configSlice.Configs {
+		ss := strings.FieldsFunc(v.Subnet, util.SplitFunc)
+		address := ss[0] + "." + ss[1] + "." + ss[2] + "."
+		Address[v.User] = make(map[string]interface{})
+		for i := 1; i <= 254; i++ {
+			Address[v.User][address+strconv.Itoa(i)] = nil
+		}
+		delete(Address[v.User], address+strconv.Itoa(1))
+	}
+	return Address
 }
 
 func (s *Service) InitializeServerConfiguration() {
@@ -116,27 +146,12 @@ func (s *Service) InitializeServerConfiguration() {
 }
 
 func (s *Service) readCreateServerTemplateConfig(name string) {
-	fmt.Println("name", name)
 	configs, err := util.ReadConfigs(config.WorkConf.GetString("wireguard.wgctlServerDir") + name)
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
-	fmt.Println("configs", configs)
 	s.buildServerConfig(configs)
-}
-
-func (s *Service) initCreateServerTemplateConfig(confConfigs *api.Configs) {
-	//configs := &model.ConfigObjConfig{
-	//	Name:                confConfigs.User,
-	//	Subnet:              confConfigs.Subnet,
-	//	Address:             confConfigs.Address,
-	//	DNS:                 "8.8.8.8",
-	//	MTU:                 "1350",
-	//	AllowedIPs:          "0.0.0.0/0",
-	//	PersistentKeepalive: "25",
-	//}
-	//s.buildServerConfig(configs)
 }
 
 func (s *Service) buildServerConfig(configs *model.ConfigObjConfig) {
@@ -158,13 +173,11 @@ func (s *Service) buildServerConfig(configs *model.ConfigObjConfig) {
 	userID := fmt.Sprintf("%x", md5.Sum([]byte(marshal)))
 	create.UserId = userID
 	marshal, _ = json.Marshal(&create)
-	err = util.WriteFile(config.WorkConf.GetString("wireguard.wgctlServerDir")+create.Name, string(marshal))
-	if err != nil {
+	if err = util.WriteFile(config.WorkConf.GetString("wireguard.wgctlServerDir")+create.Name, string(marshal)); err != nil {
 		log.Error(fmt.Sprintf("写入服务端wireguard配置失败%s", err.Error()))
 		return
 	}
-	err = util.WriteFile(config.WorkConf.GetString("wireguard.wgConfigDir")+create.Name+".conf", util.BuildAppendWCS(create)+"\n\n")
-	if err != nil {
+	if err = util.WriteFile(config.WorkConf.GetString("wireguard.wgConfigDir")+create.Name+".conf", util.BuildAppendWCS(create)+"\n\n"); err != nil {
 		log.Error(fmt.Sprintf("写入服务端wireguard配置失败%s", err.Error()))
 		return
 	}
@@ -190,46 +203,30 @@ func (s *Service) iptablesCamouflage() {
 	}
 }
 
+func (s *Service) getActiveInterface() {
+	sl, err := util.FileForEach("/etc/wgctl/wireguard/")
+	if err != nil {
+		log.Error(err.Error())
+	}
+	for _, v := range sl {
+		configs, err := util.ReadConfigs("/etc/wgctl/wireguard/" + v.Name())
+		if err != nil {
+			log.Error(err.Error())
+			continue
+		}
+		s.ActiveInterface[v.Name()] = configs.WireguardConfig
+	}
+	//output, _ := exec.Command("/bin/sh", "-c", "wg | grep \"interface:\" |awk '{print $2}'").Output()
+	//s.ActiveInterface
+	//return strings.Replace(string(output), "\n", "", -1)
+}
+
 func (s *Service) getListenPort() int {
 	var min, max int
 	rule := strings.Split(config.WorkConf.GetString("wireguard.container.port"), "-")
 	min, _ = strconv.Atoi(rule[0])
 	max, _ = strconv.Atoi(rule[1])
 	return util.GenerateRandInt(min, max)
-}
-
-func InspectionServerNameMapping() map[string]*model.ConfigObjConfig {
-	ServerNameMapping := make(map[string]*model.ConfigObjConfig)
-	sl, err := util.FileForEach("/etc/wgctl/server/")
-	if err != nil {
-		log.Error(err.Error())
-	}
-	for _, v := range sl {
-		configs, err := util.ReadConfigs("/etc/wgctl/server/" + v.Name())
-		if err != nil {
-			log.Error(err.Error())
-			continue
-		}
-		ServerNameMapping[v.Name()] = configs
-	}
-	return ServerNameMapping
-}
-
-func InspectionClientNameMapping() map[string]*model.ConfigObjConfig {
-	ServerNameMapping := make(map[string]*model.ConfigObjConfig)
-	sl, err := util.FileForEach("/etc/wgctl/client/")
-	if err != nil {
-		log.Error(err.Error())
-	}
-	for _, v := range sl {
-		configs, err := util.ReadConfigs("/etc/wgctl/client/" + v.Name())
-		if err != nil {
-			log.Error(err.Error())
-			continue
-		}
-		ServerNameMapping[configs.Name] = configs
-	}
-	return ServerNameMapping
 }
 
 func (s *Service) getServerNameMapping(name string) (*model.ConfigObjConfig, bool) {
@@ -261,41 +258,9 @@ func (s *Service) getClientNameMappingAll() {
 
 func (s *Service) getServerListenPort(name string) string {
 	return s.ServerNameMapping[name].ListenPort
-	//ws, _ := util.ReadConfigs(config.WorkConf.GetString("wireguard.wgctlServerDir") + name)
-	//return ws.ListenPort
 }
 
-func (s *Service) setIpPool(name, subnet string) string {
-	s.AddressPool[name] = make(map[string]interface{})
-	ss := strings.FieldsFunc(subnet, util.SplitFunc)
-	address := ss[0] + "." + ss[1] + "." + ss[2] + "."
-	for i := 1; i <= 255; i++ {
-		s.AddressPool[name][address+strconv.Itoa(i)] = nil
-	}
-	delete(s.AddressPool[name], address+strconv.Itoa(1))
-	return address + strconv.Itoa(1)
-}
-
-func InitializeIpAddressPool() map[string]map[string]interface{} {
-	Address := make(map[string]map[string]interface{})
-	configSlice, err := config.WorkConf.UnmarshalKeySliceContainer("wireguard.container")
-	if err != nil {
-		log.Error(err.Error())
-		return nil
-	}
-	for _, v := range configSlice.Configs {
-		ss := strings.FieldsFunc(v.Subnet, util.SplitFunc)
-		address := ss[0] + "." + ss[1] + "." + ss[2] + "."
-		Address[v.User] = make(map[string]interface{})
-		for i := 1; i <= 254; i++ {
-			Address[v.User][address+strconv.Itoa(i)] = nil
-		}
-		delete(Address[v.User], address+strconv.Itoa(1))
-	}
-	return Address
-}
-
-func (s *Service) getAddress(name string) (string, error) {
+func (s *Service) getClientAddress(name string) (string, error) {
 	for k, v := range s.AddressPool {
 		if k == name {
 			for kk, _ := range v {
@@ -304,25 +269,6 @@ func (s *Service) getAddress(name string) (string, error) {
 		}
 	}
 	return "", errors.New("the server address does not exist")
-}
-
-// SaveServerConfig 保存服务端配置文件
-func (s *Service) SaveServerConfig(create *model.ConfigObjConfig) (*model.ConfigObjConfig, error) {
-	uc, _ := json.Marshal(create)
-	userID := fmt.Sprintf("%x", md5.Sum([]byte(uc)))
-	create.UserId = userID
-	uc, _ = json.Marshal(create)
-	err := util.WriteFile(config.WorkConf.GetString("wireguard.wgctlServerDir")+create.Name, string(uc))
-	if err != nil {
-		log.Error(err.Error())
-		return create, errors.New(fmt.Sprintf("写入服务端wireguard配置失败%s", err.Error()))
-	}
-	err = util.WriteFile(config.WorkConf.GetString("wireguard.wgConfigDir")+create.Name+".conf", util.BuildAppendWCS(create)+"\n\n")
-	if err != nil {
-		log.Error(fmt.Sprintf("写入服务端wireguard配置失败%s", err.Error()))
-		return nil, err
-	}
-	return create, nil
 }
 
 func (s *Service) getServerAddress(id string) (string, bool) {
@@ -342,6 +288,47 @@ func (s *Service) getCreateTime(createTime int64) int {
 		return 0
 	}
 	return atoi
+}
+
+func (s *Service) setIpPool(name, subnet string) string {
+	s.AddressPool[name] = make(map[string]interface{})
+	ss := strings.FieldsFunc(subnet, util.SplitFunc)
+	address := ss[0] + "." + ss[1] + "." + ss[2] + "."
+	for i := 1; i <= 255; i++ {
+		s.AddressPool[name][address+strconv.Itoa(i)] = nil
+	}
+	delete(s.AddressPool[name], address+strconv.Itoa(1))
+	return address + strconv.Itoa(1)
+}
+
+// SaveServerConfig 保存服务端配置文件
+func (s *Service) SaveServerConfig(create *model.ConfigObjConfig) (*model.ConfigObjConfig, error) {
+	uc, _ := json.Marshal(create)
+	userID := fmt.Sprintf("%x", md5.Sum([]byte(uc)))
+	create.UserId = userID
+	uc, _ = json.Marshal(create)
+	if err := util.WriteFile(config.WorkConf.GetString("wireguard.wgctlServerDir")+create.Name, string(uc)); err != nil {
+		log.Error(err.Error())
+		return create, errors.New(fmt.Sprintf("写入服务端wireguard配置失败%s", err.Error()))
+	}
+	if err := util.WriteFile(config.WorkConf.GetString("wireguard.wgConfigDir")+create.Name+".conf", util.BuildAppendWCS(create)+"\n\n"); err != nil {
+		log.Error(fmt.Sprintf("写入服务端wireguard配置失败%s", err.Error()))
+		return nil, err
+	}
+	return create, nil
+}
+
+// deleteClientConfig 将服务端配置中的客户端配置删除
+func (s *Service) deleteClientConfig(path, address string) error {
+	Output, err := exec.Command("/bin/sh", "-c", fmt.Sprintf("grep -n -B 2 %s %s | awk '{print $1}' | grep -o -E '\\<[0-9]\\>|\\<[0-9][0-9]\\>|\\<[0-9][0-9][0-9]\\>'", address, path)).Output()
+	if err != nil {
+		return err
+	}
+	nums := strings.Split(string(Output), "\n")
+	for i := 0; i < len(nums)-1; i++ {
+		exec.Command("/bin/sh", "-c", fmt.Sprintf("sed -i \"%sd\" %s", nums[0], path)).Run()
+	}
+	return nil
 }
 
 func (s *Service) formatFileName(name, symbol string) string {

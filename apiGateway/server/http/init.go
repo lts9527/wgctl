@@ -15,8 +15,6 @@ func Init(c *gin.Context) {
 		c.JSON(400, res.GinH(e.ERROR, err.Error(), nil))
 		return
 	}
-	//claim, _ := util.ParseToken(c.GetHeader("Authorization"))
-	//req.UserID = uint32(claim.UserID)
 	Service := c.Keys["work"].(service.ServiceClient)
 	Resp, err := Service.Ps(context.Background(), &req)
 	if err != nil {

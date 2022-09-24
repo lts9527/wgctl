@@ -4,11 +4,11 @@ import (
 	"context"
 	api "ctl/api/grpc/v1"
 	http "ctl/api/http/v1"
-	"ctl/log"
 	req "ctl/service/http"
 	"encoding/json"
 	"fmt"
 	"github.com/spf13/cobra"
+	"os"
 	"time"
 )
 
@@ -16,7 +16,10 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete 删除指定的wireguard客户端配置 删除多个id或名称使用空格隔开",
 	PreRun: func(cmd *cobra.Command, args []string) {
-
+		if len(args) == 0 {
+			fmt.Println("删除名称不能为空")
+			os.Exit(1)
+		}
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -40,20 +43,24 @@ func runDelete(ctx context.Context, req http.Service, args []string, do *api.Del
 	}
 	response, err := req.Delete(do, "http://127.0.0.1:4000/api/v1/work/delete")
 	if err != nil {
-		log.Error(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
 	if response.Ret != 1 {
-		log.Error(response.Msg)
+		fmt.Println(response.Msg)
 		return
 	}
 	marshal, err := json.Marshal(&response.Data)
 	if err != nil {
-		log.Error(err.Error())
+		fmt.Println(err.Error())
 		return
 	}
 	ss := make(map[string][]string)
-	json.Unmarshal(marshal, &ss)
+	err = json.Unmarshal(marshal, &ss)
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
 	for _, v := range ss["DoesNotExist"] {
 		fmt.Println("Error: No such Name: ", v)
 	}

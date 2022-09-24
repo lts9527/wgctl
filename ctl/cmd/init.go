@@ -35,12 +35,12 @@ func runInit(ctx context.Context, req http.Service) {
 	configSlice, err := ctlConf().UnmarshalKeySliceContainer("wireguard.container")
 	if err != nil {
 		fmt.Println(err.Error())
+		return
 	}
-	InitOptions := &api.InitOptions{Wireguard: &api.Wireguard{
-		Container: configSlice,
-	}}
 	CreateFolder()
-	Run(InitOptions)
+	Run(&api.InitOptions{Wireguard: &api.Wireguard{
+		Container: configSlice,
+	}})
 }
 
 func CreateFolder() {
@@ -48,27 +48,18 @@ func CreateFolder() {
 }
 
 func Run(io *api.InitOptions) {
-	rwc := BuildDockerRunWorkCmd(&api.Container{
+	err := util.WriteFile("docker-compose.yaml", BuildDockerRunWorkCmd(&api.Container{
 		Name:   io.Wireguard.Container.Name,
 		Port:   io.Wireguard.Container.Port,
 		Subnet: io.Wireguard.Container.Subnet,
-	})
-	err := util.WriteFile("docker-compose.yaml", rwc)
+	}))
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
-	//cmd := exec.Command("/bin/sh", "-c", "docker-compose up -d")
-	//output, err := cmd.CombinedOutput()
-	//if err != nil {
-	//	fmt.Println(cmd.Stderr)
-	//	return
-	//}
-	//fmt.Println(string(output))
 }
 
 func BuildDockerRunWorkCmd(co *api.Container) string {
-	//ctlConf := config.NewConfig()
 	var sb strings.Builder
 	sb.Write([]byte(RunDockerfile))
 	var envMap = make(map[string]interface{})

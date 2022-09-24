@@ -289,23 +289,6 @@ func BuildAppendWCS(wc *model.ConfigObjConfig) string {
 	return FromTemplateContent(sb.String(), envMap)
 }
 
-// BuildServerConfigTemplate 初始化默认的服务端配置
-func BuildServerConfigTemplate(wc *model.ConfigObjConfig) string {
-	var sb strings.Builder
-	sb.Write([]byte(SERVERCONFIGTEMPLATE))
-	var envMap = make(map[string]interface{})
-	envMap["Name"] = wc.PrivateKey
-	envMap["Port"] = wc.ListenPort
-	envMap["PrivateKey"] = wc.PrivateKey
-	envMap["PublicKey"] = wc.PublicKey
-	envMap["Address"] = wc.Address
-	envMap["DNS"] = wc.DNS
-	envMap["MTU"] = wc.MTU
-	envMap["AllowedIPs"] = wc.AllowedIPs
-	envMap["PersistentKeepalive"] = wc.PersistentKeepalive
-	return FromTemplateContent(sb.String(), envMap)
-}
-
 // FromTemplateContent 替换字符串里的关键字
 func FromTemplateContent(templateContent string, envMap map[string]interface{}) string {
 	tmpl, err := template.New("text").Parse(templateContent)

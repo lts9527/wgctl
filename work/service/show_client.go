@@ -13,7 +13,7 @@ func (s *Service) ShowClient(ctx context.Context, so *model.ShowOptions) (reply 
 	reply = new(pb.MessageResponse)
 	var configs []byte
 	var Existence = false
-	// 遍历是否存在这个配置名称
+	// 遍历查询是否存在这个配置名称
 	if _, ok := s.getClientNameMapping(so.UserId); !ok {
 		for _, v := range s.ClientNameMapping {
 			if v.UserId[:9] == so.UserId {

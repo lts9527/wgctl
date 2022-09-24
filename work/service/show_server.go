@@ -13,7 +13,7 @@ import (
 func (s *Service) ShowServer(ctx context.Context, so *model.ShowOptions) (reply *pb.MessageResponse, err error) {
 	reply = new(pb.MessageResponse)
 	var Existence = false
-	// 遍历是否存在这个配置名称
+	// 遍历查询是否存在这个配置名称
 	if _, ok := s.getServerNameMapping(so.UserId); !ok {
 		for _, v := range s.ServerNameMapping {
 			if v.UserId[:9] == so.UserId {

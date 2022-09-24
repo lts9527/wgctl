@@ -6,10 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-//var (
-//	CtlConf *config
-//)
-
 type Config struct {
 	viper           *viper.Viper
 	ContainerConfig *api.Container
