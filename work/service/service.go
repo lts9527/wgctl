@@ -37,6 +37,13 @@ func NewService() *Service {
 	}
 }
 
+func (s *Service) Init() {
+	s.InitializeServerConfiguration()
+	s.InitializeClientConfiguration()
+	s.iptablesCamouflage()
+	s.startAllWG()
+}
+
 func InspectionClientNameMapping() map[string]*model.ConfigObjConfig {
 	var err error
 	var clientList []fs.FileInfo
@@ -111,11 +118,6 @@ func InitializePortPool() map[int]bool {
 	return portPool
 }
 
-func (s *Service) Init() {
-	go s.InitializeServerConfiguration()
-	go s.InitializeClientConfiguration()
-}
-
 func (s *Service) InitializeServerConfiguration() {
 	var err error
 	var configList []fs.FileInfo
@@ -158,8 +160,6 @@ func (s *Service) InitializeServerConfiguration() {
 		for _, v := range configList {
 			s.readCreateServerTemplateConfig(v.Name())
 		}
-		s.iptablesCamouflage()
-		s.startAllWG()
 		return
 	}
 	createList := make(map[string]bool)
@@ -175,8 +175,6 @@ func (s *Service) InitializeServerConfiguration() {
 	for k, _ := range createList {
 		s.readCreateServerTemplateConfig(k)
 	}
-	s.iptablesCamouflage()
-	s.startAllWG()
 }
 
 func (s *Service) InitializeClientConfiguration() {
@@ -201,7 +199,6 @@ func (s *Service) InitializeClientConfiguration() {
 		}
 		delete(s.AddressPool, clientConfigs.Address)
 	}
-	s.startAllWG()
 }
 
 func (s *Service) readCreateServerTemplateConfig(name string) {
@@ -222,8 +219,11 @@ func (s *Service) buildServerConfig(configs *model.ConfigObjConfig) {
 		return
 	}
 	PrivateKey, PublicKey := util.GenerateKeyPair()
+	if configs.Time == 0 {
+		configs.Time = int32(time.Now().Unix())
+	}
 	create := &model.ConfigObjConfig{
-		Time:                int32(time.Now().Unix()),
+		Time:                configs.Time,
 		Name:                configs.Name,
 		ListenPort:          strconv.Itoa(ListenPort),
 		PrivateKey:          PrivateKey,
@@ -272,10 +272,7 @@ func (s *Service) stopWG(name string) {
 }
 
 func (s *Service) iptablesCamouflage() {
-	output, err := exec.Command("/bin/sh", "-c", `iptables-save | grep "POSTROUTING -o eth0 -j MASQUERADE"`).CombinedOutput()
-	if err != nil {
-		log.Error(fmt.Sprintf("iptablesCamouflage: %s", err.Error()))
-	}
+	output, _ := exec.Command("/bin/sh", "-c", `iptables-save | grep "POSTROUTING -o eth0 -j MASQUERADE"`).CombinedOutput()
 	if len(output) == 0 {
 		exec.Command("/bin/sh", "-c", "iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE").Run()
 	}
