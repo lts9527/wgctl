@@ -224,14 +224,14 @@ func (s *Service) iptablesCamouflage() {
 }
 
 func (s *Service) getLatestHandshake(ip string) string {
-	output, err := exec.Command("/bin/bash", "-c", fmt.Sprintf("wg | grep -A 2 %s | grep \"latest handshake\"", ip)).CombinedOutput()
+	str := fmt.Sprintf("wg | grep -A 2 %s | grep 'latest handshake'", ip)
+	fmt.Println("str", str)
+	output, err := exec.Command("/bin/bash", "-c", str).CombinedOutput()
 	if err != nil {
 		log.Error(fmt.Sprintf("getLinkDetails %s", err.Error()))
 	}
 	ss := strings.Split(string(output), ": ")
-	fmt.Println("len", len(ss))
-	fmt.Println("getLatestHandshake ss", ss)
-	return ss[1]
+	return strings.Replace(ss[1], "\n", "", -1)
 }
 
 func (s *Service) getTransfer(ip string) string {
@@ -240,9 +240,7 @@ func (s *Service) getTransfer(ip string) string {
 		log.Error(fmt.Sprintf("getTransfer %s", err.Error()))
 	}
 	ss := strings.Split(string(output), ": ")
-	fmt.Println("len", len(ss))
-	fmt.Println("getTransfer ss", ss)
-	return ss[1]
+	return strings.Replace(ss[1], "\n", "", -1)
 }
 
 func (s *Service) getActiveInterface() {
