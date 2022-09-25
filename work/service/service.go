@@ -229,6 +229,8 @@ func (s *Service) getLatestHandshake(ip string) string {
 		log.Error(fmt.Sprintf("getLinkDetails %s", err.Error()))
 	}
 	ss := strings.Split(string(output), ": ")
+	fmt.Println("len", len(ss))
+	fmt.Println("getLatestHandshake ss", ss)
 	return ss[1]
 }
 
@@ -238,6 +240,8 @@ func (s *Service) getTransfer(ip string) string {
 		log.Error(fmt.Sprintf("getTransfer %s", err.Error()))
 	}
 	ss := strings.Split(string(output), ": ")
+	fmt.Println("len", len(ss))
+	fmt.Println("getTransfer ss", ss)
 	return ss[1]
 }
 
