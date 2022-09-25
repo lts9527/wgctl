@@ -51,10 +51,14 @@ func psUp(ctx context.Context, req http.Service, po *api.PsOptions) {
 	var ID = "CLIENT ID"
 	if po.Server {
 		ID = "SERVER ID"
+		fmt.Printf("%-15s %-20s %-30s %-10s %-10s\n", ID, "CREATED", "STATUS", "PORTS", "NAMES")
+		for _, v := range ss["ps"] {
+			fmt.Printf("%-15s %-20s %-30s %-10s %-10s\n", v.WgConfigId[:9], v.Created, v.Status, v.Ports, v.Names)
+		}
+		return
 	}
-	fmt.Printf("%-15s %-30s %-30s %-30s %-30s %-10s\n", ID, "CREATED", "STATUS", "TRANSFER", "PORTS", "NAMES")
-	//fmt.Printf("%-15s %-23s %-7s %-20s\n", ID, "STATUS", "PORTS", "NAMES")
+	fmt.Printf("%-15s %-20s %-30s %-40s %-10s %-10s\n", ID, "CREATED", "STATUS", "TRANSFER", "PORTS", "NAMES")
 	for _, v := range ss["ps"] {
-		fmt.Printf("%-15s %-30s %-30s %-30s %-30s %-10s\n", v.WgConfigId[:9], v.Created, v.Status, v.Transfer, v.Ports, v.Names)
+		fmt.Printf("%-15s %-20s %-30s %-40s %-10s %-10s\n", v.WgConfigId[:9], v.Created, v.Status, v.Transfer, v.Ports, v.Names)
 	}
 }

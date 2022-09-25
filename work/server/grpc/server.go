@@ -13,7 +13,7 @@ type Service struct {
 
 func NewTaskService() *Service {
 	srv := service.NewService()
-	srv.InitializeServerConfiguration()
+	srv.Init()
 	return &Service{
 		svc: srv,
 	}
