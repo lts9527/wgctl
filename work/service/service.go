@@ -218,16 +218,23 @@ func (s *Service) buildServerConfig(configs *model.ConfigObjConfig) {
 		log.Error(err.Error())
 		return
 	}
-	PrivateKey, PublicKey := util.GenerateKeyPair()
+	if configs.PrivateKey == "" && configs.PublicKey == "" {
+		PrivateKey, PublicKey := util.GenerateKeyPair()
+		configs.PrivateKey = PrivateKey
+		configs.PublicKey = PublicKey
+	}
+	if configs.ListenPort == "" {
+		configs.ListenPort = strconv.Itoa(ListenPort)
+	}
 	if configs.Time == 0 {
 		configs.Time = int32(time.Now().Unix())
 	}
 	create := &model.ConfigObjConfig{
 		Time:                configs.Time,
 		Name:                configs.Name,
-		ListenPort:          strconv.Itoa(ListenPort),
-		PrivateKey:          PrivateKey,
-		PublicKey:           PublicKey,
+		ListenPort:          configs.ListenPort,
+		PrivateKey:          configs.PrivateKey,
+		PublicKey:           configs.PublicKey,
 		Address:             configs.Address,
 		DNS:                 configs.DNS,
 		MTU:                 configs.MTU,
