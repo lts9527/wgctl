@@ -16,12 +16,7 @@ var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete 删除指定的wireguard客户端配置 删除多个id或名称使用空格隔开",
 	PreRun: func(cmd *cobra.Command, args []string) {
-		if !deletes.All {
-			if len(args) == 0 {
-				fmt.Println("删除名称不能为空")
-				os.Exit(1)
-			}
-		}
+
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
@@ -40,8 +35,14 @@ func init() {
 }
 
 func runDelete(ctx context.Context, req http.Service, args []string, do *api.DeleteOptions) {
-	for _, v := range args {
-		do.Id = append(do.Id, v)
+	if !deletes.All {
+		if len(args) == 0 {
+			fmt.Println("删除名称不能为空")
+			os.Exit(1)
+		}
+		for _, v := range args {
+			do.Id = append(do.Id, v)
+		}
 	}
 	response, err := req.Delete(do, "http://127.0.0.1:4000/api/v1/work/delete")
 	if err != nil {
