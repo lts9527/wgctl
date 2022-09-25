@@ -21,7 +21,8 @@ func (s *Service) PsServer(ctx context.Context, po *model.PsOptions) (reply *pb.
 		name := s.formatFileName(v.Name(), ".conf")
 		reply.Ps = append(reply.Ps, &pb.PsOptions{
 			WgConfigId: s.ServerNameMapping[name].UserId,
-			Status:     s.formatTimeFormat(s.getCreateTime(int64(s.ServerNameMapping[name].Time))),
+			Created:    s.formatTimeFormat(s.getCreateTime(int64(s.ServerNameMapping[name].Time))),
+			Status:     "Up",
 			Ports:      s.ServerNameMapping[name].ListenPort,
 			Names:      name,
 		})

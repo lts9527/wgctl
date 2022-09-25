@@ -21,7 +21,9 @@ func (s *Service) PsClient(ctx context.Context, po *model.PsOptions) (reply *pb.
 		if !strings.Contains(v.Name(), ".gitignore") {
 			reply.Ps = append(reply.Ps, &pb.PsOptions{
 				WgConfigId: s.ClientNameMapping[v.Name()].UserId,
-				Status:     s.formatTimeFormat(s.getCreateTime(int64(s.ClientNameMapping[v.Name()].Time))),
+				Created:    s.formatTimeFormat(s.getCreateTime(int64(s.ClientNameMapping[v.Name()].Time))),
+				Status:     s.getLatestHandshake(s.ClientNameMapping[v.Name()].Address),
+				Transfer:   s.getTransfer(s.ClientNameMapping[v.Name()].Address),
 				Ports:      s.ClientNameMapping[v.Name()].ListenPort,
 				Names:      v.Name(),
 			})

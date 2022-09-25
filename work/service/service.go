@@ -223,6 +223,26 @@ func (s *Service) iptablesCamouflage() {
 	}
 }
 
+func (s *Service) getLatestHandshake(ip string) string {
+	output, err := exec.Command("/bin/bash", "-c", fmt.Sprintf("wg | grep -A 2 %s | grep latest handshake", ip)).CombinedOutput()
+	if err != nil {
+		log.Error(fmt.Sprintf("getLinkDetails %s", err.Error()))
+		return ""
+	}
+	fmt.Println(string(output))
+	return string(output)
+}
+
+func (s *Service) getTransfer(ip string) string {
+	output, err := exec.Command("/bin/bash", "-c", fmt.Sprintf("wg | grep -A 2 %s | grep transfer", ip)).CombinedOutput()
+	if err != nil {
+		log.Error(fmt.Sprintf("getTransfer %s", err.Error()))
+		return ""
+	}
+	fmt.Println(string(output))
+	return string(output)
+}
+
 func (s *Service) getActiveInterface() {
 	sl, err := util.FileForEach("/etc/wgctl/wireguard/")
 	if err != nil {

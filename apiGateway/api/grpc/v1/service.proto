@@ -101,6 +101,7 @@ message PsOptions {
   string status = 5;
   string ports = 6;
   string names = 7;
+  string transfer = 8;
 }
 
 message RemoveOptions {
